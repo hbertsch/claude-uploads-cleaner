@@ -21,3 +21,9 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
       - run: npm test
+      - run: npm run check:fixtures
+      - run: npm run test:unit
+      - run: npm run check:version
+      - run: npm run build
+      - run: npm run lint:ext
+      - run: npm run test:packaged

@@ -9,13 +9,19 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:unit": "node --test tests/unit/",
-    "check:fixtures": "node scripts/check-fixtures.mjs"
+    "check:fixtures": "node scripts/check-fixtures.mjs",
+    "check:version": "node scripts/check-version.mjs",
+    "check:build-reproducible": "node scripts/check-build-reproducible.mjs",
+    "build": "node scripts/build.mjs",
+    "lint:ext": "web-ext lint --source-dir dist/firefox --warnings-as-errors",
+    "test:packaged": "node scripts/test-packaged.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "1.64.1",
     "eslint": "^10.14.0",
     "globals": "^17.14.0",
-    "prettier": "^3.9.10"
+    "prettier": "^3.9.10",
+    "web-ext": "^10.8.0"
   }
 }
