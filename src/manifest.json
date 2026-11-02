@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Uploads Cleaner for claude.ai",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Adds a button that deletes all uploaded files in the claude.ai privacy settings. Not affiliated with Anthropic.",
   "homepage_url": "https://github.com/hbertsch/claude-uploads-cleaner",
   "icons": {

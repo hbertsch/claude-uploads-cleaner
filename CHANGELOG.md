@@ -6,6 +6,20 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-02
+
+### Fixed
+
+- Button text and border are readable on light and dark pages.
+
+### Changed
+
+- README shows the demo GIF on top and fewer images.
+
+### Added
+
+- Tests that run the packaged extension in installed Chrome and Brave.
+
 ## [1.0.0] - 2026-11-02
 
 ### Added
