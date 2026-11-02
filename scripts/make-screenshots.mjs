@@ -1,4 +1,4 @@
-// Writes the README images and the store screenshots from the mock page with generic dummy file
+// Writes the README problem image and the store screenshots from the mock page with generic dummy file
 // names. Usage: npm run screenshots (or node scripts/make-screenshots.mjs)
 import { mkdir } from "node:fs/promises";
 import { chromium } from "@playwright/test";
@@ -49,12 +49,10 @@ async function captureButtonConfirmAndRunning() {
   await page.goto(UPLOADED_FILES_URL);
 
   await page.locator(BUTTON_SELECTOR).waitFor();
-  await saveDialogImage(page, "button.png");
   await saveStoreScreenshot(page, "01-button.png");
 
   await page.locator(BUTTON_SELECTOR).click();
   await page.getByRole("button", { name: "Yes, delete everything" }).waitFor();
-  await saveDialogImage(page, "confirm.png");
   await saveStoreScreenshot(page, "02-confirm.png");
 
   await page.getByRole("button", { name: "Yes, delete everything" }).click();
@@ -64,23 +62,7 @@ async function captureButtonConfirmAndRunning() {
       Number(document.querySelector(selector).textContent.match(/(\d+) deleted/)?.[1]) >= 8,
     MESSAGE_SELECTOR,
   );
-  await saveDialogImage(page, "running.png");
   await saveStoreScreenshot(page, "03-running.png");
-  await close();
-}
-
-async function captureDone() {
-  const { context, close } = await launchWithExtension();
-  await installClaudeMock(context, { ...MOCK_OPTIONS, fileNames: generateFileNames(40) });
-  const page = await context.newPage();
-  await page.goto(UPLOADED_FILES_URL);
-  await page.locator(BUTTON_SELECTOR).click();
-  await page.getByRole("button", { name: "Yes, delete everything" }).click();
-  await page.waitForFunction(
-    (selector) => document.querySelector(selector)?.textContent.startsWith("Done:"),
-    MESSAGE_SELECTOR,
-  );
-  await saveDialogImage(page, "done.png");
   await close();
 }
 
@@ -88,5 +70,4 @@ await mkdir(README_IMAGE_DIRECTORY, { recursive: true });
 await mkdir(STORE_SCREENSHOT_DIRECTORY, { recursive: true });
 await captureProblemList();
 await captureButtonConfirmAndRunning();
-await captureDone();
 console.log("Screenshots written to docs/images and store/screenshots.");

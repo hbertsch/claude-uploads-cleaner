@@ -2,7 +2,9 @@
 
 A browser extension that deletes all your uploaded files on claude.ai with one button.
 
-![The Uploaded files list with the new button "Delete all uploaded files" on top](docs/images/button.png)
+![Demo: one click deletes all uploaded files, with live count and a Stop button](docs/images/demo.gif)
+
+The demo runs on a mock page with 300 dummy files. The mock answers faster than the real claude.ai, so a real run is slower (see Speed).
 
 Not affiliated with, endorsed by or sponsored by Anthropic. Claude and claude.ai are trademarks of Anthropic, PBC.
 
@@ -16,25 +18,11 @@ claude.ai lists every file you ever uploaded under Settings > Privacy > Uploaded
 
 The extension adds one button, "Delete all uploaded files", to that page. After a second confirmation it clicks through the list for you: trash icon, confirm, next file. When a page of files is empty, it loads the next one. It shows how many files are gone, how long it took and how fast it goes. You can stop it at any time.
 
-![Demo on a mock page with dummy files](docs/images/demo.gif)
-
-The demo shows a mock page with 300 dummy files. The mock answers faster than the real claude.ai, so the real run is slower (see Speed).
-
 | Step                                 | What you see                                                                           |
 | ------------------------------------ | -------------------------------------------------------------------------------------- |
 | 1. Click "Delete all uploaded files" | An inline question: "Delete ALL uploaded files? This cannot be undone."                |
 | 2. Click "Yes, delete everything"    | A live line with count, time and files per second, plus a Stop button                  |
 | 3. Wait                              | "Done: N files deleted in mm:ss." Or "Stopped: N files deleted." after a click on Stop |
-
-![The inline confirmation](docs/images/confirm.png)
-
-![The running view with count, time, speed and the Stop button](docs/images/running.png)
-
-![The finished run](docs/images/done.png)
-
-This is how the button looks on the real claude.ai page (the files are dummy files I uploaded for testing):
-
-![The button on the real page](docs/images/real-button.png)
 
 ## Install
 
