@@ -76,7 +76,10 @@ That is about 7 times faster. A full run of 60 files took 4 seconds. At 0.115 s 
 | Chromium 156 (Playwright 1.64.1, headless) | Automated tests on every change: mock page built from the real page, up to 1,000 files    |
 | Chrome (real claude.ai, English interface) | Script injected by hand, 60 dummy files, 2026-11-02. The installed extension was not used |
 | Firefox                                    | Only linted with `web-ext lint` (0 errors, 0 warnings). Not run                           |
-| Brave, Edge                                | Not tested yet                                                                            |
+| Brave 1.98.60 (real claude.ai)             | Released Chrome zip loaded unpacked, 2026-11-02. Worked, reported by the maintainer       |
+| Edge                                       | Not tested yet                                                                            |
+
+Chrome and Brave use the same engine, so the same package is expected to behave the same in Chrome, but the unpacked extension was only run in Brave.
 
 ## Limits
 
