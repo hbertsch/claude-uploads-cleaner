@@ -6,12 +6,14 @@
   const PROGRESS_CONTROLS_ID = "uploads-cleaner-progress-controls";
   const LAYOUT_MESSAGE_ID = "uploads-cleaner-layout-message";
 
+  // The text takes the colour of the page, so it is readable in the light and the dark theme.
+  // The red border (#d93025) keeps at least 3:1 against both white and near-black.
   function createStyledButton(text) {
     const button = document.createElement("button");
     button.textContent = text;
     button.style.cssText =
-      "align-self: flex-start; width: fit-content; margin: 8px 8px 8px 0; padding: 8px 14px; border-radius: 8px; border: 1px solid #b3261e; " +
-      "background: transparent; color: #f2b8b5; cursor: pointer; font-size: 14px;";
+      "align-self: flex-start; width: fit-content; margin: 8px 8px 8px 0; padding: 8px 14px; border-radius: 8px; border: 1px solid #d93025; " +
+      "background: transparent; color: inherit; cursor: pointer; font-size: 14px;";
     return button;
   }
 
