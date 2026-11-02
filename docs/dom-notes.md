@@ -16,7 +16,7 @@ Captured on 2026-11-02 on the real page in an English interface, with Claude in 
 5. **Confirm dialog.** Clicking the trash button opens an element with `role="alertdialog"`. It is rendered **outside** the panel and outside the Settings dialog (a portal directly below `body`), so it must be searched in `document`, not in the panel. It **contains the file name**: its `h2` reads "Delete <name>?". It holds two buttons: **Cancel first, Delete last**. The destructive button is the **last** button of the alertdialog; on the real page it also carries the initial focus. The text of both buttons is translated, the order is not (to be confirmed in German in Phase 4). Pressing Escape closes the dialog without deleting.
 6. **After confirming.** The alertdialog closes and the row leaves `tbody` almost at once (see measurements). No toast element was seen. After a fresh reload the deleted files are gone, so the removal reached the server.
 7. **Load more.** The panel holds one `button` that is not inside the `table`: a sibling of the table's wrapper `div`, after it. Its text is "Load more" (translated). It is present only while more files exist; when all files are loaded it is removed. A click appends the next rows to the same `tbody`; the rows are not replaced.
-8. **Empty list.** The `table` is gone. The panel shows the heading, the description paragraph and a `div` with the text "No uploaded files found". Nothing else.
+8. **Empty list.** The `table` is gone. The panel shows the heading, the description paragraph and a `div` with the text "No uploaded files found". Nothing else. The Settings dialog has its own title as a first `h2` ("Settings"); the panel's heading is the **last** `h2` of the dialog. Without a table, `findPanel` takes the last `h2`, climbs while the parent has only one child, and uses the parent of that block as the panel (checked on the real empty list in Phase 3).
 9. **Icons.** The icon spans hold characters from the Unicode private use area (icon font). They carry no meaning and no text.
 
 ## Measurements (real page, 2026-11-02, English UI, 60 dummy files)
@@ -35,7 +35,7 @@ Consequences: the old loop waited 700 ms plus up to 150 ms per file although the
 ## Not observed
 
 - A rate limit, an error toast or a failed deletion: none could be provoked safely. Failure handling is generic and verified against the mock only.
-- A toast after a deletion: none appeared.
+- A toast after a deletion: none appeared in Phase 2. In Phase 3 (run by the extension) a small toast "Deleted <name>" showed at the bottom right of the page, outside the panel; the code does not use it.
 - The panel in German: captured in Phase 4.
 
 ## Phase 1 assumptions checked against the real page

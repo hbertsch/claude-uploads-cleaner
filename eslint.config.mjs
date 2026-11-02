@@ -6,7 +6,10 @@ export default [
   js.configs.recommended,
   {
     files: ["src/**/*.js"],
-    languageOptions: { sourceType: "script", globals: globals.browser },
+    languageOptions: {
+      sourceType: "script",
+      globals: { ...globals.browser, UploadsCleaner: "readonly" },
+    },
   },
   {
     files: ["scripts/**", "tests/**", "*.mjs"],

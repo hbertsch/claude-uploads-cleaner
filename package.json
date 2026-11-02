@@ -8,6 +8,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "test:unit": "node --test tests/unit/",
     "check:fixtures": "node scripts/check-fixtures.mjs"
   },
   "devDependencies": {
