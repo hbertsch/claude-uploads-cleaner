@@ -58,6 +58,13 @@ Regression with the Phase 6 build (2026-11-02, session 5, English UI): 60 dummy 
 - What is language independent (verified in English, assumed for other languages): the URL hash, the `table`/`tbody`/`tr` structure, the `span[title]` with the file name, the two buttons per row and their order, the `role="alertdialog"` that contains the file name, the order of its two buttons (Cancel first, Delete last: confirmed in English only, not in German), the `button` after the table. What changes with the language: the heading, description, column headings, `aria-label` of the table, the expand column, "Show chats for <name>" and "Delete <name>", the dialog title and both dialog buttons, "Load more", the empty-state text, the date format.
 - `tests/fixtures/pseudo/` (`scripts/make-pseudo-fixture.mjs`) replaces every text and `aria-label` by `zz-<number>` and keeps only file names. The delete test runs on it for every code change; code that depended on any label fails there.
 
+## Theme (light and dark)
+
+- claude.ai marks its theme on `<html>`: `data-mode="dark"` or `data-mode="light"`, and it sets the CSS `color-scheme` to match. The Settings > Appearance > Theme choice is System, Light or Dark; with System the browser's setting decides. The captured fixtures contain no attributes of `<html>`, so this was read on the live page (2026-11-02).
+- Page colours seen: dark theme, body background `rgb(25, 25, 25)`, text `rgba(255, 255, 255, 0.93)`; light theme, dark text on white. The extension does not read the theme. Its text uses `color: inherit`, its border is `#d93025` (4.77:1 on white, 3.45:1 on the dark dialog).
+- Live check with `scripts/live-contrast-check.js`, dummy files only, extension build of the day injected: every text element 14.38:1 (dark) and 17.49:1 (light), every border 3.45:1 (dark) and 4.77:1 (light). The old colours (`#f2b8b5` text on transparent, `#b3261e` border) read 2.52:1 for the border in the dark theme, and pale pink text on white in the light theme.
+- The running view was not produced by a long real run (10 files finish in about a second). It was drawn with `UploadsCleaner.ui.startProgress` without deleting anything, so the styles are the real ones.
+
 ## Layout guard
 
 - With the route in the URL and a dialog open, the extension expects either a table whose rows all have a trash button, or an empty state without any button. Anything else (also a list that does not finish loading) is reported after 5 seconds (`LAYOUT_GRACE_MS`, a policy choice) as "Layout not recognised. Nothing was deleted." with a link to the issue form, and no button is offered. If the list renders later, the message is removed and the button appears.
@@ -78,3 +85,8 @@ Regression with the Phase 6 build (2026-11-02, session 5, English UI): 60 dummy 
 ## Phase 1 assumptions checked against the real page
 
 The hand-written Phase 1 mock matched the real page in what the old code needs (trash buttons with `aria-label` "Delete <name>", a confirm button with the text "Delete", a "Load more" button, a heading "Uploaded files"). The three start tests pass against the fixture-based mock with the unchanged extension code, so no test is marked `test.fail`. Differences the mock now reproduces: the list is a table, the confirm dialog is a portal outside the panel and contains the file name, there are two buttons per row, and "Load more" is removed when the list is complete. The English-only label matching in the old code (`Delete .+`, `Delete`, `Load more`, `Uploaded files`) stays untouched until Phase 3.
+
+## Installed Chrome and Brave (Phase 14)
+
+- Installed Google Chrome 155.0.8059.79 ignores `--load-extension` (also with `--disable-features=DisableLoadExtensionCommandLineSwitch`). `tests/e2e/fixtures.mjs` therefore loads the extension over the DevTools protocol (`Extensions.loadUnpacked`, browser flag `--enable-unsafe-extension-debugging`, Playwright's `--disable-extensions` default switched off) when `BROWSER_EXECUTABLE` is set. The same path works in Brave 156.1.98.60.
+- Run: `BROWSER_EXECUTABLE="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" EXTENSION_DIR=<unzipped chrome zip> npx playwright test browsers.spec.mjs`, and the same with the path of `Brave Browser.app/Contents/MacOS/Brave Browser`.
