@@ -8,7 +8,7 @@ export const TEST_DELETE_LATENCY_MS = 5;
 // Measured on the real page, see docs/dom-notes.md.
 export const REAL_PAGE_SIZE = 50;
 // Time after the last deletion of a page until "Load more" yields rows again (one measurement).
-// The mock starts to simulate it in Phase 5.
+// Pass it as loadMoreSettleMs to simulate the race.
 export const REAL_LOAD_MORE_SETTLE_MS = 2283;
 
 const FIXTURES_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../fixtures");
@@ -31,6 +31,8 @@ function readFixture(locale, fileName) {
 // confirm-dialog.html is the template of the confirm dialog.
 // locale: "en" | "de" | "pseudo" selects the fixture set.
 // fileCount 0 renders the empty-state panel.
+// loadMoreSettleMs: a "Load more" click less than this long after a deletion adds no rows (the
+// real page does that after a page end). 0 switches the race off.
 // breakLayout: "remove-trash-buttons" | "rename-table" makes the panel look like an unknown layout.
 export async function installClaudeMock(
   context,
@@ -39,6 +41,7 @@ export async function installClaudeMock(
     pageSize = REAL_PAGE_SIZE,
     deleteLatencyMs = TEST_DELETE_LATENCY_MS,
     panelRenderDelayMs = 0,
+    loadMoreSettleMs = 0,
     locale = "en",
     breakLayout = null,
   } = {},
@@ -48,6 +51,7 @@ export async function installClaudeMock(
     pageSize,
     deleteLatencyMs,
     panelRenderDelayMs,
+    loadMoreSettleMs,
     breakLayout,
     panelHtml: readFixture(locale, fileCount === 0 ? "panel-empty.html" : "panel-with-rows.html"),
     confirmDialogHtml: readFixture(locale, "confirm-dialog.html"),
@@ -81,6 +85,7 @@ const MOCK_PAGE = `<!doctype html>
     (_, index) => "dummy-" + String(index + 1).padStart(3, "0") + ".txt",
   );
   window.__deletionLog = [];
+  let lastDeletionTime = -Infinity;
 
   function parseHtml(html) {
     const template = document.createElement("template");
@@ -97,7 +102,10 @@ const MOCK_PAGE = `<!doctype html>
     const loadMoreButton = [...panel.querySelectorAll("button")].find(
       (button) => !panel.querySelector("table").contains(button),
     );
-    loadMoreButton.addEventListener("click", () => appendNextPage());
+    loadMoreButton.addEventListener("click", () => {
+      if (Date.now() - lastDeletionTime < settings.loadMoreSettleMs) return;
+      appendNextPage();
+    });
 
     function appendNextPage() {
       for (const name of pendingNames.splice(0, settings.pageSize)) {
@@ -143,6 +151,7 @@ const MOCK_PAGE = `<!doctype html>
       setTimeout(() => {
         row.remove();
         window.__deletionLog.push(name);
+        lastDeletionTime = Date.now();
       }, settings.deleteLatencyMs);
     });
     document.body.append(confirmDialog);
