@@ -85,7 +85,9 @@ Only the maintainer releases. In short:
 
 1. Set the new version in `package.json` and `src/manifest.json`, and move the `[Unreleased]` entries in `CHANGELOG.md` under a heading for the version with its date.
 2. Run `npm run check:version` and the other checks above.
-3. Tag the commit `v<version>` and push the tag.
-4. Approve the store upload jobs when GitHub asks.
+3. Tag the commit `v<version>` and push the tag. The release workflow builds and tests both zips and creates the GitHub release with the zips, `SHA256SUMS.txt` and the changelog section as notes.
+4. Approve the store upload jobs when GitHub asks. They run only when the repository variable `PUBLISH_FIREFOX` or `PUBLISH_EDGE` is `true`, and only for versions after the first one, which the maintainer uploads by hand.
+
+To try the release build without releasing, run the Release workflow by hand with "dry-run" ticked.
 
 The steps for the store accounts are in [docs/maintainers.md](docs/maintainers.md).

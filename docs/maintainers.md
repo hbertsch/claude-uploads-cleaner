@@ -41,21 +41,11 @@ gh variable set PUBLISH_EDGE --body "true"
 
 ## 4. How a release flows
 
-1. Update the version in `package.json` and `src/manifest.json`, and put the changelog entries under the new version in `CHANGELOG.md`.
+1. Update the version in `package.json` and `src/manifest.json`, and put the changelog entries under the new version in `CHANGELOG.md`, with the release date in the heading.
 2. Run the checks from [CONTRIBUTING.md](../CONTRIBUTING.md).
 3. Tag the commit `v<version>` and push the tag.
-4. The release workflow builds both zips, runs the tests and creates the GitHub release with the zips, the checksums and the changelog section.
-5. If the store jobs are switched on, GitHub waits for your approval in the `store-publish` environment, then uploads the Firefox and Edge packages.
+4. The release workflow (`.github/workflows/release.yml`) checks that the tag matches the version, builds both zips, runs the tests and writes `SHA256SUMS.txt`. It then creates the GitHub release with both zips, the checksums and the changelog section as notes.
+5. If `PUBLISH_FIREFOX` or `PUBLISH_EDGE` is `true`, GitHub waits for your approval in the `store-publish` environment, then uploads the Firefox zip to addons.mozilla.org and the Chrome zip to Microsoft Edge Add-ons. A store job needs a listing that you created by hand with the first version (sections 1 and 2).
 6. Chrome Web Store is not part of the pipeline. Chrome, Brave and Edge users can load the Chrome zip from the release as described in the README.
 
-The workflow files are in `.github/workflows/`.
-
-## 5. After the first store approval
-
-- Replace `<AMO_URL>` in the README with the address of the Firefox listing, and add the Edge listing when it exists.
-- Update the "Tested on" table in the README with what you ran yourself.
-
-## Settings worth checking once
-
-- Settings > Code security: turn on private vulnerability reporting (the security policy points to it) and Dependabot alerts.
-- Settings > Branches: protect `main` (pull request or passing `test` check before merge).
+To test the build without a release, start the workflow by hand: Actions > Release > Run workflow, with "dry-run" ticked. It builds and tests and keeps the zips as a workflow artifact, but creates no release and uploads nothing to a store.

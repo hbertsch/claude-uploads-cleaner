@@ -16,15 +16,29 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
+      - run: pipx install uv
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run lint
       - run: npm run format:check
-      - run: npm test
-      - run: npm run check:fixtures
       - run: npm run check:docs
-      - run: npm run test:unit
+      - run: npm run check:issue-forms
+      - run: npm run check:fixtures
       - run: npm run check:version
       - run: npm run build
       - run: npm run lint:ext
+      - run: npm run test:unit
+      - run: npm test
       - run: npm run test:packaged
+      - uses: actions/upload-artifact@v7
+        with:
+          name: zips
+          path: dist/*.zip
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

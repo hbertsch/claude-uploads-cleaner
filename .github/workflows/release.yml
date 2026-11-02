@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Build and test only; create no release and upload nothing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run check:version
+      - run: npm run build
+      - run: npm run lint:ext
+      - run: npm run test:unit
+      - run: npm test
+      - run: npm run test:packaged
+      - name: Write checksums
+        working-directory: dist
+        run: shasum -a 256 ./*.zip > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-files
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+
+  github-release:
+    needs: build
+    if: github.ref_type == 'tag' && !inputs.dry-run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-files
+          path: release-files
+      - name: Extract release notes from the changelog
+        run: node scripts/changelog-section.mjs "${GITHUB_REF_NAME#v}" > release-notes.md
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          files: |
+            release-files/*.zip
+            release-files/SHA256SUMS.txt
+          body_path: release-notes.md
+          fail_on_unmatched_files: true
+
+  publish-firefox:
+    needs: github-release
+    if: github.ref_type == 'tag' && vars.PUBLISH_FIREFOX == 'true'
+    runs-on: ubuntu-latest
+    environment: store-publish
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-files
+          path: release-files
+      - name: Find the Firefox zip
+        id: package
+        run: echo "path=release-files/uploads-cleaner-${GITHUB_REF_NAME#v}-firefox.zip" >> "$GITHUB_OUTPUT"
+      - uses: wdzeng/firefox-addon@3184ee491b500e080885e046051366a4228c6e5d # v1.2.1
+        with:
+          addon-guid: ${{ vars.ADDON_GUID }}
+          xpi-path: ${{ steps.package.outputs.path }}
+          jwt-issuer: ${{ secrets.AMO_JWT_ISSUER }}
+          jwt-secret: ${{ secrets.AMO_JWT_SECRET }}
+
+  publish-edge:
+    needs: github-release
+    if: github.ref_type == 'tag' && vars.PUBLISH_EDGE == 'true'
+    runs-on: ubuntu-latest
+    environment: store-publish
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-files
+          path: release-files
+      - name: Find the Chrome zip
+        id: package
+        run: echo "path=release-files/uploads-cleaner-${GITHUB_REF_NAME#v}-chrome.zip" >> "$GITHUB_OUTPUT"
+      - uses: wdzeng/edge-addon@9881f57720358040d079eaa06a4596dc9c273eb6 # v2.1.1
+        with:
+          product-id: ${{ vars.EDGE_PRODUCT_ID }}
+          zip-path: ${{ steps.package.outputs.path }}
+          api-key: ${{ secrets.EDGE_API_KEY }}
+          client-id: ${{ secrets.EDGE_CLIENT_ID }}
+          upload-only: ${{ vars.EDGE_UPLOAD_ONLY == 'true' }}
