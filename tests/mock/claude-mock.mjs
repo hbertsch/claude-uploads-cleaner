@@ -11,18 +11,27 @@ export const REAL_PAGE_SIZE = 50;
 // The mock starts to simulate it in Phase 5.
 export const REAL_LOAD_MORE_SETTLE_MS = 2283;
 
-const FIXTURE_DIRECTORY = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../fixtures/real/en",
-);
+const FIXTURES_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../fixtures");
+const FIXTURE_DIRECTORY_BY_LOCALE = {
+  en: "real/en",
+  de: "real/de",
+  pseudo: "pseudo",
+};
 
-function readFixture(fileName) {
-  return readFileSync(path.join(FIXTURE_DIRECTORY, fileName), "utf8");
+function readFixture(locale, fileName) {
+  return readFileSync(
+    path.join(FIXTURES_ROOT, FIXTURE_DIRECTORY_BY_LOCALE[locale], fileName),
+    "utf8",
+  );
 }
 
 // Serves a stand-in for claude.ai's "Uploaded files" settings panel. Its markup is the DOM
-// captured from the real page (tests/fixtures/real/en): the first row of panel-with-rows.html is
-// the template of every row, confirm-dialog.html is the template of the confirm dialog.
+// captured from the real page (tests/fixtures/real/en, see docs/dom-notes.md for the other
+// locales): the first row of panel-with-rows.html is the template of every row,
+// confirm-dialog.html is the template of the confirm dialog.
+// locale: "en" | "de" | "pseudo" selects the fixture set.
+// fileCount 0 renders the empty-state panel.
+// breakLayout: "remove-trash-buttons" | "rename-table" makes the panel look like an unknown layout.
 export async function installClaudeMock(
   context,
   {
@@ -30,6 +39,8 @@ export async function installClaudeMock(
     pageSize = REAL_PAGE_SIZE,
     deleteLatencyMs = TEST_DELETE_LATENCY_MS,
     panelRenderDelayMs = 0,
+    locale = "en",
+    breakLayout = null,
   } = {},
 ) {
   const settings = JSON.stringify({
@@ -37,8 +48,9 @@ export async function installClaudeMock(
     pageSize,
     deleteLatencyMs,
     panelRenderDelayMs,
-    panelHtml: readFixture("panel-with-rows.html"),
-    confirmDialogHtml: readFixture("confirm-dialog.html"),
+    breakLayout,
+    panelHtml: readFixture(locale, fileCount === 0 ? "panel-empty.html" : "panel-with-rows.html"),
+    confirmDialogHtml: readFixture(locale, "confirm-dialog.html"),
   });
   await context.route("https://claude.ai/**", (route) =>
     route.fulfill({
@@ -78,6 +90,7 @@ const MOCK_PAGE = `<!doctype html>
 
   function renderPanel() {
     const panel = parseHtml(settings.panelHtml);
+    if (settings.fileCount === 0) return showPanel(panel);
     const tbody = panel.querySelector("tbody");
     const rowHtml = tbody.querySelector("tr").outerHTML;
     tbody.replaceChildren();
@@ -97,11 +110,28 @@ const MOCK_PAGE = `<!doctype html>
       if (pendingNames.length === 0) loadMoreButton.remove();
     }
 
+    showPanel(panel);
+    appendNextPage();
+    if (settings.breakLayout) breakLayout(panel);
+  }
+
+  function showPanel(panel) {
     const dialog = document.createElement("div");
     dialog.setAttribute("role", "dialog");
     dialog.append(panel);
     document.body.append(dialog);
-    appendNextPage();
+  }
+
+  function breakLayout(panel) {
+    if (settings.breakLayout === "remove-trash-buttons") {
+      for (const row of panel.querySelectorAll("tbody > tr")) [...row.querySelectorAll("button")].pop().remove();
+    } else if (settings.breakLayout === "rename-table") {
+      for (const element of panel.querySelectorAll("table, thead, tbody, tr, td, th")) {
+        const replacement = document.createElement("div");
+        replacement.append(...element.childNodes);
+        element.replaceWith(replacement);
+      }
+    }
   }
 
   function openConfirmDialog(row, name) {

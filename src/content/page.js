@@ -44,9 +44,11 @@
     return row.querySelector("span[title]")?.title ?? "";
   }
 
-  // The first button of a row opens the row's chats, the last one is the trash button.
+  // Each row has exactly two buttons: the first opens the row's chats, the last one is the trash
+  // button. Any other count means the row is not what we know, so nothing is returned.
   function findTrashButton(row) {
-    return [...row.querySelectorAll("button")].at(-1) ?? null;
+    const buttons = [...row.querySelectorAll("button")];
+    return buttons.length === 2 ? buttons[1] : null;
   }
 
   // The confirm dialog is a portal outside the panel. It is the one that names the row's file;
@@ -72,8 +74,25 @@
     );
   }
 
+  // Tells whether the open settings dialog looks like the list described in docs/dom-notes.md:
+  // a table whose rows all have a trash button, or an empty state without any button.
+  // "unrecognised" also covers a list that is still loading; the caller decides how long to wait.
+  function inspectLayout() {
+    const dialog = document.querySelector('[role="dialog"]');
+    if (!dialog) return { state: "absent" };
+    const panel = findPanel();
+    if (!panel) return { state: "unrecognised", dialog, panel: null };
+    const hasTable = Boolean(panel.querySelector("table"));
+    const rows = findRows(panel);
+    const isRecognised = hasTable
+      ? rows.length > 0 && rows.every((row) => findTrashButton(row))
+      : !panel.querySelector("button");
+    return { state: isRecognised ? "recognised" : "unrecognised", dialog, panel };
+  }
+
   UploadsCleaner.page = {
     isUploadedFilesRoute,
+    inspectLayout,
     findPanel,
     findHeading,
     findRows,

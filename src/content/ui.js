@@ -3,6 +3,7 @@
   const BUTTON_ID = "uploads-cleaner-button";
   const CONFIRM_ID = "uploads-cleaner-confirm";
   const MESSAGE_ID = "uploads-cleaner-message";
+  const LAYOUT_MESSAGE_ID = "uploads-cleaner-layout-message";
 
   function createStyledButton(text) {
     const button = document.createElement("button");
@@ -69,5 +70,35 @@
     anchor.insertAdjacentElement("afterend", button);
   }
 
-  UploadsCleaner.ui = { hasButton, insertButton, showProgress, showDone };
+  function hasLayoutMessage() {
+    return Boolean(document.getElementById(LAYOUT_MESSAGE_ID));
+  }
+
+  function showLayoutNotRecognised(container) {
+    if (hasLayoutMessage()) return;
+    const message = document.createElement("p");
+    message.id = LAYOUT_MESSAGE_ID;
+    message.textContent = "Layout not recognised. Nothing was deleted. Please report it: ";
+    const link = document.createElement("a");
+    link.href = UploadsCleaner.config.LAYOUT_ISSUE_URL;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = UploadsCleaner.config.LAYOUT_ISSUE_URL;
+    message.append(link);
+    container.prepend(message);
+  }
+
+  function removeLayoutMessage() {
+    document.getElementById(LAYOUT_MESSAGE_ID)?.remove();
+  }
+
+  UploadsCleaner.ui = {
+    hasButton,
+    insertButton,
+    showProgress,
+    showDone,
+    hasLayoutMessage,
+    showLayoutNotRecognised,
+    removeLayoutMessage,
+  };
 })();

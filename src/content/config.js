@@ -11,4 +11,9 @@ UploadsCleaner.config = {
   LOAD_MORE_WAIT_MS: 5000,
   ROWS_POLL_INTERVAL_MS: 250,
   MAX_EMPTY_LOADS: 3,
+  // Time the page gets to render the list before the layout counts as not recognised. A policy
+  // choice, not a measurement.
+  LAYOUT_GRACE_MS: 5000,
+  LAYOUT_ISSUE_URL:
+    "https://github.com/hbertsch/claude-uploads-cleaner/issues/new?template=layout_changed.yml",
 };
