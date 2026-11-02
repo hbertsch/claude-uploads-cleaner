@@ -10,7 +10,7 @@ import { VIEWPORT, generateFileNames, launchWithExtension } from "./mock-browser
 
 const FILE_COUNT = 300;
 const DELETE_LATENCY_MS = 30;
-const PAUSE_BETWEEN_STEPS_MS = 1500;
+const PAUSE_BETWEEN_STEPS_MS = 2000;
 const GIF_PATH = "docs/images/demo.gif";
 const GIF_WIDTH = 800;
 const GIF_FRAMES_PER_SECOND = 8;
@@ -40,7 +40,18 @@ await close();
 const filter =
   `fps=${GIF_FRAMES_PER_SECOND},scale=${GIF_WIDTH}:-1:flags=lanczos,split[a][b];` +
   "[a]palettegen=max_colors=64[palette];[b][palette]paletteuse=dither=bayer:bayer_scale=4";
-execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", videoPath, "-vf", filter, GIF_PATH]);
+execFileSync("ffmpeg", [
+  "-y",
+  "-loglevel",
+  "error",
+  "-i",
+  videoPath,
+  "-vf",
+  filter,
+  "-loop",
+  "0",
+  GIF_PATH,
+]);
 await rm(videoDirectory, { recursive: true, force: true });
 
 const { size } = statSync(GIF_PATH);
