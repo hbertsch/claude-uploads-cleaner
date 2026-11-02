@@ -35,7 +35,16 @@
     return panel ? page.findLoadMoreButton(panel) : null;
   }
 
-  async function deleteRow(row) {
+  function sleep(milliseconds) {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds));
+  }
+
+  function findRowByName(fileName) {
+    return findCurrentRows().find((row) => page.readFileName(row) === fileName) ?? null;
+  }
+
+  // One try: click trash, click confirm, wait until the row leaves the page.
+  async function tryDeleteRow(row) {
     const trashButton = page.findTrashButton(row);
     if (!trashButton) return false;
     trashButton.click();
@@ -48,11 +57,29 @@
     return Boolean(await waitFor(() => !row.isConnected, config.ROW_REMOVAL_TIMEOUT_MS));
   }
 
+  // After a failed try the dialog is closed, the run waits (the wait doubles with every failed
+  // try) and checks by file name whether the file went away after all. That counts as deleted.
+  // The file is tried MAX_RETRIES_PER_FILE + 1 times in total.
+  async function deleteRow(row) {
+    const fileName = page.readFileName(row);
+    let currentRow = row;
+    let backoffMilliseconds = config.ROW_REMOVAL_TIMEOUT_MS;
+    for (let attempt = 0; attempt <= config.MAX_RETRIES_PER_FILE; attempt++) {
+      if (await tryDeleteRow(currentRow)) return true;
+      page.findCancelButton(currentRow)?.click();
+      await sleep(backoffMilliseconds);
+      backoffMilliseconds *= 2;
+      currentRow = findRowByName(fileName);
+      if (!currentRow) return true;
+    }
+    return false;
+  }
+
   // Right after the last row of a page was deleted, the page may answer the load-more click with nothing
   // for a while, so the click is repeated after LOAD_MORE_PAUSE_MS. The list is finished only when the button is gone.
   async function loadNextPage(shouldStop) {
     for (let attempt = 0; attempt <= config.MAX_RETRIES_PER_FILE; attempt++) {
-      if (shouldStop()) return "stopped";
+      if (shouldStop() || hasLeftTheList()) return "stopped";
       const loadMoreButton = findCurrentLoadMoreButton();
       if (!loadMoreButton) return "finished";
       loadMoreButton.click();
@@ -66,12 +93,17 @@
     return "failed";
   }
 
+  // The user also ends the run by leaving the route or closing the settings dialog.
+  function hasLeftTheList() {
+    return !page.isUploadedFilesRoute() || !page.findPanel();
+  }
+
   // Returns the number of deleted files and why the loop ended: "finished", "stopped" or "failed".
   async function deleteAllFiles({ onProgress, shouldStop }) {
     let deletedCount = 0;
 
     while (true) {
-      if (shouldStop()) return { deletedCount, outcome: "stopped" };
+      if (shouldStop() || hasLeftTheList()) return { deletedCount, outcome: "stopped" };
 
       const rows = findCurrentRows();
       if (rows.length === 0) {

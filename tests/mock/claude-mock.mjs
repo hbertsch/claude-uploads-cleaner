@@ -33,6 +33,12 @@ function readFixture(locale, fileName) {
 // fileCount 0 renders the empty-state panel.
 // loadMoreSettleMs: a "Load more" click less than this long after a deletion adds no rows (the
 // real page does that after a page end). 0 switches the race off.
+// failure: { afterDeletes, mode, failedAttempts } makes the next failedAttempts confirm clicks fail
+// once afterDeletes files are gone (invented behaviour, no real error response was ever observed):
+//   "ignore": the dialog stays open and nothing happens;
+//   "error-toast": the dialog closes, an error toast appears and the row stays;
+//   "late": the dialog closes and the row leaves only after lateRemovalMs.
+// window.__confirmAttempts counts the confirm clicks per file name.
 // breakLayout: "remove-trash-buttons" | "rename-table" makes the panel look like an unknown layout.
 export async function installClaudeMock(
   context,
@@ -44,6 +50,8 @@ export async function installClaudeMock(
     loadMoreSettleMs = 0,
     locale = "en",
     breakLayout = null,
+    failure = null,
+    lateRemovalMs = 700,
   } = {},
 ) {
   const settings = JSON.stringify({
@@ -53,6 +61,8 @@ export async function installClaudeMock(
     panelRenderDelayMs,
     loadMoreSettleMs,
     breakLayout,
+    failure,
+    lateRemovalMs,
     panelHtml: readFixture(locale, fileCount === 0 ? "panel-empty.html" : "panel-with-rows.html"),
     confirmDialogHtml: readFixture(locale, "confirm-dialog.html"),
   });
@@ -85,6 +95,8 @@ const MOCK_PAGE = `<!doctype html>
     (_, index) => "dummy-" + String(index + 1).padStart(3, "0") + ".txt",
   );
   window.__deletionLog = [];
+  window.__confirmAttempts = {};
+  let injectedFailureCount = 0;
   let lastDeletionTime = -Infinity;
 
   function parseHtml(html) {
@@ -142,17 +154,38 @@ const MOCK_PAGE = `<!doctype html>
     }
   }
 
+  function showErrorToast() {
+    const toast = document.createElement("div");
+    toast.setAttribute("role", "status");
+    toast.textContent = "Something went wrong";
+    document.body.append(toast);
+    setTimeout(() => toast.remove(), 1000);
+  }
+
   function openConfirmDialog(row, name) {
     const confirmDialog = parseHtml(settings.confirmDialogHtml.replaceAll(TEMPLATE_NAME, name));
     const [cancelButton, deleteButton] = confirmDialog.querySelectorAll("button");
     cancelButton.addEventListener("click", () => confirmDialog.remove());
     deleteButton.addEventListener("click", () => {
+      window.__confirmAttempts[name] = (window.__confirmAttempts[name] ?? 0) + 1;
+      const failure = settings.failure;
+      const shouldFail =
+        failure &&
+        window.__deletionLog.length >= failure.afterDeletes &&
+        injectedFailureCount < (failure.failedAttempts ?? Infinity);
+      if (shouldFail) injectedFailureCount++;
+      if (shouldFail && failure.mode === "ignore") return;
       confirmDialog.remove();
+      if (shouldFail && failure.mode === "error-toast") {
+        showErrorToast();
+        return;
+      }
+      const delay = shouldFail && failure.mode === "late" ? settings.lateRemovalMs : settings.deleteLatencyMs;
       setTimeout(() => {
         row.remove();
         window.__deletionLog.push(name);
         lastDeletionTime = Date.now();
-      }, settings.deleteLatencyMs);
+      }, delay);
     });
     document.body.append(confirmDialog);
   }

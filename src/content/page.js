@@ -51,14 +51,25 @@
     return buttons.length === 2 ? buttons[1] : null;
   }
 
-  // The confirm dialog is a portal outside the panel. It is the one that names the row's file;
-  // its last button is the destructive one.
-  function findConfirmButton(row) {
+  // The confirm dialog is a portal outside the panel. It is the one that names the row's file.
+  function findConfirmDialog(row) {
     const fileName = readFileName(row);
-    const dialog = [...document.querySelectorAll('[role="alertdialog"]')].find((candidate) =>
-      candidate.textContent.includes(fileName),
+    return (
+      [...document.querySelectorAll('[role="alertdialog"]')].find((candidate) =>
+        candidate.textContent.includes(fileName),
+      ) ?? null
     );
+  }
+
+  // The destructive button is the last button of the dialog.
+  function findConfirmButton(row) {
+    const dialog = findConfirmDialog(row);
     return dialog ? ([...dialog.querySelectorAll("button")].at(-1) ?? null) : null;
+  }
+
+  // Cancel is the first button of the dialog.
+  function findCancelButton(row) {
+    return findConfirmDialog(row)?.querySelector("button") ?? null;
   }
 
   // The only button after the table that is not part of it.
@@ -99,6 +110,7 @@
     readFileName,
     findTrashButton,
     findConfirmButton,
+    findCancelButton,
     findLoadMoreButton,
   };
 })();

@@ -49,6 +49,8 @@ Stop: the run was stopped three times (after 20 files by script, after 5, after 
 
 `docs/images/real-running.png` shows the running view on the real page, cut to the panel. It was taken during a run with a deliberate 1.5 s delay before every trash click (to have time for the screenshot), so its "0.6 files/s" is not the real speed. Do not quote that figure.
 
+Regression with the Phase 6 build (2026-11-02, session 5, English UI): 60 dummy files in 3 new chats, safety check `ok: true`, delete-all with the injected current build (`make-inject.mjs` plus a counter of retries). Result: "Done: 60 files deleted in 00:04." (about 0.07 s per file), 0 retries, no timeout fired, the list was empty after a reload. `ROW_REMOVAL_TIMEOUT_MS` stays 500. The run ended with "Done", not "Stopped", so the new check for a vanished panel did not trigger at the end of the list. The three throwaway chats of session 5 ("Ok") were not deleted.
+
 ## Interface language
 
 - claude.ai has no interface language setting for this account. The only "Language" entry (Settings > General > Voice) is the voice language: switching it to German and back (done once in Phase 4) changed nothing on the page and only reset the neighbouring voice "Style" entry to a default. So no real German capture exists.
@@ -62,9 +64,14 @@ Stop: the run was stopped three times (after 20 files by script, after 5, after 
 - Not detectable without labels: if claude.ai ever changes the route hash (`#settings/data-privacy-controls/uploaded-files`), the extension does not see the page at all. The button then disappears without any message. The bug report form covers this case ("the button is missing").
 - While the button exists (also during a run) the guard does not run, so the changing list during a run cannot trigger the message.
 
+## Failure handling
+
+- A file counts as failed when its row does not leave the page within `ROW_REMOVAL_TIMEOUT_MS` after the confirm click. The run then clicks Cancel in the confirm dialog if it is still open (first button of the alertdialog that names the file), waits (starts at `ROW_REMOVAL_TIMEOUT_MS`, doubles per failed try) and looks the file up again by name. Gone means it was removed late and counts as deleted; present means another try. After `MAX_RETRIES_PER_FILE` retries (the file is tried `MAX_RETRIES_PER_FILE + 1` times) the run stops with "Stopped after N files: claude.ai did not accept further deletions. Wait a few minutes and run again."
+- Between files the run ends with "Stopped: N files deleted." when the route hash no longer matches or the panel is gone (the user left the page or closed the dialog).
+
 ## Not observed
 
-- A rate limit, an error toast or a failed deletion: none could be provoked safely. Failure handling is generic and verified against the mock only.
+- A rate limit, an error toast or a failed deletion: none could be provoked safely. Real rate-limit and error responses were never observed; failure handling is generic and verified only against an invented mock (`failure` option of `tests/mock/claude-mock.mjs`: ignored click, error toast, late removal).
 - A toast after a deletion: none appeared in Phase 2. In Phase 3 (run by the extension) a small toast "Deleted <name>" showed at the bottom right of the page, outside the panel; the code does not use it.
 - The panel in German: could not be captured (see "Interface language" below). Its fixtures are a translation of the English ones, not a capture.
 
