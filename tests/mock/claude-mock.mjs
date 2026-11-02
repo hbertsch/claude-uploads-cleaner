@@ -40,6 +40,10 @@ function readFixture(locale, fileName) {
 //   "late": the dialog closes and the row leaves only after lateRemovalMs.
 // window.__confirmAttempts counts the confirm clicks per file name.
 // breakLayout: "remove-trash-buttons" | "rename-table" makes the panel look like an unknown layout.
+// fileNames: file names (each containing a number) to list instead of dummy-001.txt and so on
+// (fileCount is then their count); the listed sizes are made up.
+// styled: adds CSS that makes the panel look like the real page (the captured markup has no
+// classes, so without it the panel is unstyled). Used for screenshots only.
 export async function installClaudeMock(
   context,
   {
@@ -52,10 +56,15 @@ export async function installClaudeMock(
     breakLayout = null,
     failure = null,
     lateRemovalMs = 700,
+    fileNames = null,
+    styled = false,
   } = {},
 ) {
+  const listedFileCount = fileNames ? fileNames.length : fileCount;
   const settings = JSON.stringify({
-    fileCount,
+    fileCount: listedFileCount,
+    fileNames,
+    styleSheet: styled ? STYLED_CSS : null,
     pageSize,
     deleteLatencyMs,
     panelRenderDelayMs,
@@ -63,7 +72,10 @@ export async function installClaudeMock(
     breakLayout,
     failure,
     lateRemovalMs,
-    panelHtml: readFixture(locale, fileCount === 0 ? "panel-empty.html" : "panel-with-rows.html"),
+    panelHtml: readFixture(
+      locale,
+      listedFileCount === 0 ? "panel-empty.html" : "panel-with-rows.html",
+    ),
     confirmDialogHtml: readFixture(locale, "confirm-dialog.html"),
   });
   await context.route("https://claude.ai/**", (route) =>
@@ -73,6 +85,31 @@ export async function installClaudeMock(
     }),
   );
 }
+
+// Makes the unstyled captured markup look like the real page (dark theme, same text hierarchy).
+const STYLED_CSS = `
+  body { margin: 0; padding: 40px; font-family: system-ui, sans-serif; font-size: 15px; background: #262624 }
+  [role="dialog"] { box-sizing: border-box; width: 1000px; margin: 0 auto; padding: 32px; background: #1f1e1d; border: 1px solid #3a3a38; border-radius: 16px; color: #f0eee6 }
+  h2 { margin: 0 0 8px; font-size: 20px; font-weight: 600 }
+  p { margin: 8px 0; color: #9c9a92; line-height: 1.5 }
+  #uploads-cleaner-message, #uploads-cleaner-confirm p, #uploads-cleaner-progress-controls p { color: #f0eee6 }
+  table { width: 100%; margin-top: 16px; border-collapse: collapse }
+  th { padding: 8px 12px 8px 0; font-weight: 400; color: #9c9a92; border-bottom: 1px solid #3a3a38 }
+  td { padding: 12px 12px 12px 0; border-bottom: 1px solid #333331 }
+  tbody td:first-child { position: relative; padding-left: 0 }
+  tbody td:first-child > button { display: none }
+  tbody td:first-child > span > span { display: block }
+  tbody td:first-child > span > span + span { color: #9c9a92; font-size: 13px }
+  td button { width: 24px; height: 24px; padding: 0; border: 0; background: transparent; cursor: pointer; position: relative }
+  td button > span { display: none }
+  td button::after { content: "\u{1F5D1}"; filter: grayscale(1) brightness(2) }
+  td:last-child > span[aria-hidden="true"] { font-size: 0 }
+  td:last-child > span[aria-hidden="true"]::after { content: "\u203A"; font-size: 22px; color: #9c9a92 }
+  td > span > span:only-child { padding: 2px 10px; border: 1px solid #4a4a47; border-radius: 999px; font-size: 13px }
+  button { font: inherit }
+  [role="alertdialog"] { border-radius: 12px; border: 1px solid #4a4a47 }
+  [role="alertdialog"] button { margin: 8px 8px 0 0; padding: 8px 14px; color: #f0eee6; background: #3a3a38; border: 0; border-radius: 8px }
+`;
 
 const MOCK_PAGE = `<!doctype html>
 <html>
@@ -89,11 +126,18 @@ const MOCK_PAGE = `<!doctype html>
 <body>
 <script>
   const settings = __SETTINGS__;
+  if (settings.styleSheet) {
+    const style = document.createElement("style");
+    style.textContent = settings.styleSheet;
+    document.head.append(style);
+  }
   const TEMPLATE_NAME = "dummy-001.txt";
-  const pendingNames = Array.from(
-    { length: settings.fileCount },
-    (_, index) => "dummy-" + String(index + 1).padStart(3, "0") + ".txt",
-  );
+  const pendingNames =
+    settings.fileNames ??
+    Array.from(
+      { length: settings.fileCount },
+      (_, index) => "dummy-" + String(index + 1).padStart(3, "0") + ".txt",
+    );
   window.__deletionLog = [];
   window.__confirmAttempts = {};
   let injectedFailureCount = 0;
@@ -103,6 +147,12 @@ const MOCK_PAGE = `<!doctype html>
     const template = document.createElement("template");
     template.innerHTML = html;
     return template.content.firstElementChild;
+  }
+
+  // Real-looking sizes for the screenshot names (the captured row says "9 B" for every file).
+  function fakeFileSize(name) {
+    const kilobytes = 40 + ((Number(name.match(/\\d+/)[0]) * 137) % 900);
+    return kilobytes + " KB";
   }
 
   function renderPanel() {
@@ -123,6 +173,7 @@ const MOCK_PAGE = `<!doctype html>
       for (const name of pendingNames.splice(0, settings.pageSize)) {
         const row = parseHtml("<table><tbody>" + rowHtml.replaceAll(TEMPLATE_NAME, name) + "</tbody></table>")
           .querySelector("tr");
+        if (settings.fileNames) row.querySelector("span[title]").nextElementSibling.textContent = fakeFileSize(name);
         const trashButton = [...row.querySelectorAll("button")].pop();
         trashButton.addEventListener("click", () => openConfirmDialog(row, name));
         tbody.append(row);
