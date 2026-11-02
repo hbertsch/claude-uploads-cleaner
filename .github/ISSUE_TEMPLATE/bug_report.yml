@@ -1,0 +1,62 @@
+name: Bug report
+description: Something does not work, for example the button does not appear.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the report. If the button does not appear, or the extension says "Layout not recognised", claude.ai probably changed its page. Please use the "claude.ai changed" form for that.
+        Do not paste real file names or other personal data.
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Chrome 156, Firefox 140, Edge 156, Brave 1.90
+    validations:
+      required: true
+  - type: input
+    id: extension-version
+    attributes:
+      label: Extension version
+      description: Shown on the extensions page of your browser.
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: interface-language
+    attributes:
+      label: claude.ai interface language
+      placeholder: English
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps
+      description: What did you do, starting from opening claude.ai?
+      placeholder: |
+        1. Open Settings > Privacy > Uploaded files
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: Include the text the extension showed, if any.
+    validations:
+      required: true
+  - type: textarea
+    id: console-output
+    attributes:
+      label: Console output
+      description: Open the developer console on the claude.ai tab and paste messages that mention the extension. Remove personal data first.
+      render: text
+    validations:
+      required: false

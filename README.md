@@ -77,7 +77,7 @@ That is about 7 times faster. A full run of 60 files took 4 seconds. At 0.115 s 
 
 - The extension clicks the same buttons you would click. It does not call any claude.ai interface behind the scenes, and it deletes one file at a time.
 - It finds the page by the URL and by the structure of the list, never by button labels. That is why it does not depend on the interface language.
-- It sends no data anywhere. The code has no network calls and the extension asks for no permissions. It runs only on `https://claude.ai/*`.
+- It sends no data anywhere. The code has no network calls and the extension asks for no permissions. It runs only on `https://claude.ai/*`. See [PRIVACY.md](PRIVACY.md).
 - If it does not recognise the page, it shows "Layout not recognised. Nothing was deleted." with a link to report it.
 - If claude.ai stops accepting deletions, it retries a few times with growing pauses and then stops with a message.
 
@@ -108,8 +108,8 @@ npm test
 npm run build
 ```
 
-`npm test` runs the end-to-end tests against the mock page, `npm run test:unit` the unit tests, `npm run build` writes the zips for Chromium browsers and Firefox into `dist/`. `npm run screenshots` and `npm run demo` recreate the images in this README. The changes are listed in [CHANGELOG.md](CHANGELOG.md).
+`npm test` runs the end-to-end tests against the mock page, `npm run test:unit` the unit tests, `npm run build` writes the zips for Chromium browsers and Firefox into `dist/`. `npm run screenshots` and `npm run demo` recreate the images in this README. How to contribute, and what to do when claude.ai changes its page, is in [CONTRIBUTING.md](CONTRIBUTING.md). Security reports go through [SECURITY.md](SECURITY.md). The changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
 ## Licence
 
-MIT.
+MIT. See [LICENSE](LICENSE).

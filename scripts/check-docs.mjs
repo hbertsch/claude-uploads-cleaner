@@ -1,9 +1,11 @@
 // Checks the documentation and the store texts:
-// - every relative link and image in README.md, CONTRIBUTING.md, docs/ and store/ points to a file,
+// - every relative link and image in README.md, CONTRIBUTING.md, SECURITY.md, PRIVACY.md, docs/
+//   and store/ points to a file,
 // - the manifest description has at most 132 characters and equals the Edge short description,
 // - the Firefox summary has at most 250 characters, the Edge long description 250 to 10,000,
 // - the store screenshots are exactly 1280 x 800 pixels,
-// - the README contains the phrases that must not get lost.
+// - the README contains the phrases that must not get lost,
+// - the governance files exist.
 // Usage: node scripts/check-docs.mjs
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -14,6 +16,20 @@ const EDGE_LONG_DESCRIPTION_MIN_LENGTH = 250;
 const EDGE_LONG_DESCRIPTION_MAX_LENGTH = 10_000;
 const STORE_SCREENSHOT_SIZE = { width: 1280, height: 800 };
 const REQUIRED_README_PHRASES = ["Keep this tab visible", "Not affiliated", "Load unpacked"];
+const REQUIRED_FILES = [
+  "LICENSE",
+  "CONTRIBUTING.md",
+  "SECURITY.md",
+  "PRIVACY.md",
+  "CHANGELOG.md",
+  "docs/maintainers.md",
+  ".github/ISSUE_TEMPLATE/bug_report.yml",
+  ".github/ISSUE_TEMPLATE/layout_changed.yml",
+  ".github/ISSUE_TEMPLATE/config.yml",
+  ".github/pull_request_template.md",
+  ".github/dependabot.yml",
+  ".github/CODEOWNERS",
+];
 // docs/agents holds private planning files that are not published.
 const PRIVATE_DIRECTORY = path.join("docs", "agents");
 
@@ -63,9 +79,15 @@ function readPngSize(pngPath) {
   return { width: header.readUInt32BE(16), height: header.readUInt32BE(20) };
 }
 
+for (const requiredFile of REQUIRED_FILES) {
+  if (!existsSync(requiredFile)) problems.push(`${requiredFile} is missing`);
+}
+
 const markdownFiles = [
   "README.md",
   "CONTRIBUTING.md",
+  "SECURITY.md",
+  "PRIVACY.md",
   ...listMarkdownFiles("docs"),
   ...listMarkdownFiles("store"),
 ].filter((markdownPath) => existsSync(markdownPath));

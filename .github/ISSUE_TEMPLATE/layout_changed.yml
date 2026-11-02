@@ -1,0 +1,61 @@
+name: claude.ai changed
+description: The button is gone, or the extension says "Layout not recognised".
+labels: [layout-changed]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        claude.ai probably changed its Uploaded files page. To fix the extension, I need the new page structure.
+        Capture it as described in [CONTRIBUTING.md](https://github.com/hbertsch/claude-uploads-cleaner/blob/main/CONTRIBUTING.md#when-claudeai-changes-its-layout). The script removes names, classes and links.
+        **Before you paste anything, remove personal data.** Check for real file names, chat titles, your name, e-mail addresses and URLs. If you are not sure, describe the page in words instead.
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Chrome 156
+    validations:
+      required: true
+  - type: input
+    id: extension-version
+    attributes:
+      label: Extension version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: interface-language
+    attributes:
+      label: claude.ai interface language
+      placeholder: English
+    validations:
+      required: true
+  - type: input
+    id: address
+    attributes:
+      label: Address of the page
+      description: The part of the address after the `#` when the Uploaded files list is open.
+      placeholder: settings/data-privacy-controls/uploaded-files
+    validations:
+      required: false
+  - type: textarea
+    id: what-you-see
+    attributes:
+      label: What you see
+      description: Is the list there? Is there a trash icon per row? What did the extension show?
+    validations:
+      required: true
+  - type: textarea
+    id: captured-markup
+    attributes:
+      label: Captured page markup
+      description: The output of `scripts/capture-dom.js`, with personal data removed.
+      render: html
+    validations:
+      required: false
+  - type: checkboxes
+    id: privacy-check
+    attributes:
+      label: Privacy check
+      options:
+        - label: I read the pasted markup and it contains no personal data.
+          required: true
