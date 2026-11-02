@@ -25,9 +25,9 @@ for (const { locale, heading } of LOCALES) {
     await expect(page.locator("h2").last()).toHaveText(heading);
     await page.locator(BUTTON_SELECTOR).click();
     await page.getByRole("button", { name: "Yes, delete everything" }).click();
-    await expect(page.locator(MESSAGE_SELECTOR)).toHaveText(`Done: ${FILE_COUNT} files deleted`, {
-      timeout: 40_000,
-    });
+    await expect(page.locator(MESSAGE_SELECTOR)).toHaveText(
+      new RegExp(`^Done: ${FILE_COUNT} files deleted in \\d\\d:\\d\\d\\.$`),
+    );
 
     const deletionLog = await page.evaluate(() => window.__deletionLog);
     expect(deletionLog).toHaveLength(FILE_COUNT);

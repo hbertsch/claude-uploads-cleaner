@@ -23,7 +23,7 @@ test("button and inline confirm delete all files of a 120-file mock across pages
   context,
   page,
 }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(60_000);
   const fileCount = 120;
   await installClaudeMock(context, { fileCount, pageSize: 50 });
   await page.goto(UPLOADED_FILES_URL);
@@ -33,9 +33,10 @@ test("button and inline confirm delete all files of a 120-file mock across pages
   await page.screenshot({ path: "test-results/phase1-confirm.png" });
 
   await page.getByRole("button", { name: "Yes, delete everything" }).click();
-  await expect(page.locator(MESSAGE_SELECTOR)).toHaveText(`Done: ${fileCount} files deleted`, {
-    timeout: 200_000,
-  });
+  await expect(page.locator(MESSAGE_SELECTOR)).toHaveText(
+    new RegExp(`^Done: ${fileCount} files deleted in \\d\\d:\\d\\d\\.$`),
+    { timeout: 30_000 },
+  );
 
   const deletionLog = await page.evaluate(() => window.__deletionLog);
   expect(deletionLog).toHaveLength(fileCount);

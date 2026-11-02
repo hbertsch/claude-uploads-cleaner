@@ -32,6 +32,23 @@ Method: `scripts/measure-live.js` run in the page with Claude in Chrome. Times c
 
 Consequences: the old loop waited 700 ms plus up to 150 ms per file although the page needs about 20 ms. The old fixed pause of 1500 ms before "Load more" is shorter than the measured 2283 ms settle time, so a "Load more" right after a page end can return nothing for about 2 s. Only one page end could be measured because the budget allows 60 files per session; the number is a single measurement, not a distribution.
 
+## Performance
+
+Measured on the real page on 2026-11-02 (English UI, 60 dummy files in 3 chats, one session, same tab and list). Method: removals of table rows were recorded with a `MutationObserver` and `performance.now()`; "per file" is the time from the click on "Yes, delete everything" to the last row removal, divided by the number of files. The Phase 1 build (`git show phase-1:src/content/main.js`, fixed sleeps of 700 ms and 150 ms polls) was injected with one added line that ends its loop after 20 files; the new build was stopped after 20 files by clicking its Stop button from the page.
+
+| Loop                                 | Files | Total  | Per file |
+| ------------------------------------ | ----- | ------ | -------- |
+| Phase 1 (fixed sleeps)               | 20    | 17.1 s | 0.857 s  |
+| Phase 5 (waits for the row to leave) | 20    | 2.3 s  | 0.115 s  |
+
+The new loop is about 7.4 times faster on the same page. Retries: 0. No wait ran into its timeout (a timeout would have ended the run with the "claude.ai did not accept further deletions" message, which never appeared). The 0.115 s per file is more than the 20 ms the page needs to remove a row; the rest is the time between the trash click, the opening of the dialog and the confirm click (not measured separately).
+
+Not measured: a page end with the new loop. The session held 60 files, so the run never reached the second page; the "Load more" retry is verified against the mock only (single measured settle time: 2283 ms).
+
+Stop: the run was stopped three times (after 20 files by script, after 5, after 12 files with a deliberate 1.5 s delay per file). Each time the message showed "Stopped: N files deleted." and the list held exactly 60 minus all files deleted so far (after the first two stops 20 and 15 rows, after the third 3 rows). A final full run of the last 3 files ended with "Done: 3 files deleted in 00:00." and an empty list.
+
+`docs/images/real-running.png` shows the running view on the real page, cut to the panel. It was taken during a run with a deliberate 1.5 s delay before every trash click (to have time for the screenshot), so its "0.6 files/s" is not the real speed. Do not quote that figure.
+
 ## Interface language
 
 - claude.ai has no interface language setting for this account. The only "Language" entry (Settings > General > Voice) is the voice language: switching it to German and back (done once in Phase 4) changed nothing on the page and only reset the neighbouring voice "Style" entry to a default. So no real German capture exists.

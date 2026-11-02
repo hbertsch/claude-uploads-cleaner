@@ -3,6 +3,7 @@
   const BUTTON_ID = "uploads-cleaner-button";
   const CONFIRM_ID = "uploads-cleaner-confirm";
   const MESSAGE_ID = "uploads-cleaner-message";
+  const PROGRESS_CONTROLS_ID = "uploads-cleaner-progress-controls";
   const LAYOUT_MESSAGE_ID = "uploads-cleaner-layout-message";
 
   function createStyledButton(text) {
@@ -30,12 +31,73 @@
     message.textContent = text;
   }
 
-  function showProgress(deletedCount) {
-    showMessage(`Deleting... ${deletedCount} done`);
+  function formatDuration(milliseconds) {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+    const seconds = String(totalSeconds % 60).padStart(2, "0");
+    return `${minutes}:${seconds}`;
   }
 
-  function showDone(deletedCount) {
-    showMessage(`Done: ${deletedCount} files deleted`);
+  let progress = null;
+
+  function renderProgress() {
+    const elapsedMilliseconds = Date.now() - progress.startTime;
+    const filesPerSecond =
+      elapsedMilliseconds > 0 ? (progress.deletedCount / elapsedMilliseconds) * 1000 : 0;
+    showMessage(
+      `Deleting uploaded files... ${progress.deletedCount} deleted · ` +
+        `${formatDuration(elapsedMilliseconds)} · ${filesPerSecond.toFixed(1)} files/s`,
+    );
+  }
+
+  // Shows the running view: the progress line (refreshed at most every
+  // PROGRESS_UPDATE_INTERVAL_MS), a hint about hidden tabs and the Stop button.
+  function startProgress(onStopRequested) {
+    progress = { startTime: Date.now(), deletedCount: 0, timer: null, controls: null };
+    renderProgress();
+    document.getElementById(MESSAGE_ID).setAttribute("aria-live", "polite");
+
+    const controls = document.createElement("div");
+    controls.id = PROGRESS_CONTROLS_ID;
+    const hint = document.createElement("p");
+    hint.textContent = "Keep this tab visible. Browsers slow down hidden tabs.";
+    const stopButton = createStyledButton("Stop");
+    stopButton.addEventListener("click", () => {
+      stopButton.disabled = true;
+      onStopRequested();
+    });
+    controls.append(hint, stopButton);
+    document.getElementById(MESSAGE_ID).insertAdjacentElement("afterend", controls);
+    progress.controls = controls;
+    progress.timer = setInterval(renderProgress, UploadsCleaner.config.PROGRESS_UPDATE_INTERVAL_MS);
+  }
+
+  function updateProgress(deletedCount) {
+    progress.deletedCount = deletedCount;
+  }
+
+  // Ends the running view and returns how long the run took.
+  function endProgress() {
+    clearInterval(progress.timer);
+    progress.controls.remove();
+    const elapsedMilliseconds = Date.now() - progress.startTime;
+    progress = null;
+    return elapsedMilliseconds;
+  }
+
+  function showDone(deletedCount, elapsedMilliseconds) {
+    showMessage(`Done: ${deletedCount} files deleted in ${formatDuration(elapsedMilliseconds)}.`);
+  }
+
+  function showStopped(deletedCount) {
+    showMessage(`Stopped: ${deletedCount} files deleted.`);
+  }
+
+  function showRefused(deletedCount) {
+    showMessage(
+      `Stopped after ${deletedCount} files: claude.ai did not accept further deletions. ` +
+        "Wait a few minutes and run again.",
+    );
   }
 
   function showConfirmStep(button, onConfirmed) {
@@ -95,8 +157,12 @@
   UploadsCleaner.ui = {
     hasButton,
     insertButton,
-    showProgress,
+    startProgress,
+    updateProgress,
+    endProgress,
     showDone,
+    showStopped,
+    showRefused,
     hasLayoutMessage,
     showLayoutNotRecognised,
     removeLayoutMessage,

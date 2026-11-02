@@ -5,8 +5,18 @@
   const { page, ui, runner } = UploadsCleaner;
 
   async function deleteAllFiles() {
-    const deletedCount = await runner.deleteAllFiles({ onProgress: ui.showProgress });
-    ui.showDone(deletedCount);
+    let isStopRequested = false;
+    ui.startProgress(() => {
+      isStopRequested = true;
+    });
+    const { deletedCount, outcome } = await runner.deleteAllFiles({
+      onProgress: ui.updateProgress,
+      shouldStop: () => isStopRequested,
+    });
+    const elapsedMilliseconds = ui.endProgress();
+    if (outcome === "finished") ui.showDone(deletedCount, elapsedMilliseconds);
+    else if (outcome === "stopped") ui.showStopped(deletedCount);
+    else ui.showRefused(deletedCount);
   }
 
   let layoutTimer = null;
