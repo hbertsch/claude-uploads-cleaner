@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Claude Uploads Cleaner",
+  "version": "1.0.0",
+  "description": "Adds a button that deletes all uploaded files in the claude.ai privacy settings.",
+  "content_scripts": [
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["content/main.js"]
+    }
+  ]
+}
