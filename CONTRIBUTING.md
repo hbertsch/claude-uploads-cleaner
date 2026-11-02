@@ -13,18 +13,19 @@ npx playwright install chromium
 
 ## Tests
 
-| Command                  | What it does                                                                          |
-| ------------------------ | ------------------------------------------------------------------------------------- |
-| `npm test`               | End-to-end tests in Chromium against a mock page built from captured claude.ai markup |
-| `npm run test:unit`      | Unit tests, including the check that no claude.ai label is used in the logic          |
-| `npm run lint`           | ESLint                                                                                |
-| `npm run format:check`   | Prettier (`npm run format` fixes it)                                                  |
-| `npm run check:fixtures` | Allow-list check for the captured page fixtures                                       |
-| `npm run check:docs`     | Links, store text lengths and screenshot sizes                                        |
-| `npm run check:version`  | `package.json`, `src/manifest.json` and `CHANGELOG.md` have the same version          |
-| `npm run build`          | Writes the Chrome and Firefox zips into `dist/`                                       |
-| `npm run lint:ext`       | Mozilla's `web-ext lint` on the Firefox build (0 errors, 0 warnings)                  |
-| `npm run test:packaged`  | Builds, unzips the Chrome zip and runs the start tests against the unzipped folder    |
+| Command                                                                                                         | What it does                                                                          |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `npm test`                                                                                                      | End-to-end tests in Chromium against a mock page built from captured claude.ai markup |
+| `npm run test:unit`                                                                                             | Unit tests, including the check that no claude.ai label is used in the logic          |
+| `npm run lint`                                                                                                  | ESLint                                                                                |
+| `npm run format:check`                                                                                          | Prettier (`npm run format` fixes it)                                                  |
+| `npm run check:fixtures`                                                                                        | Allow-list check for the captured page fixtures                                       |
+| `npm run check:docs`                                                                                            | Links, store text lengths and screenshot sizes                                        |
+| `npm run check:version`                                                                                         | `package.json`, `src/manifest.json` and `CHANGELOG.md` have the same version          |
+| `npm run build`                                                                                                 | Writes the Chrome and Firefox zips into `dist/`                                       |
+| `npm run lint:ext`                                                                                              | Mozilla's `web-ext lint` on the Firefox build (0 errors, 0 warnings)                  |
+| `npm run test:packaged`                                                                                         | Builds, unzips the Chrome zip and runs the start tests against the unzipped folder    |
+| `BROWSER_EXECUTABLE=<browser binary> EXTENSION_DIR=<unzipped chrome zip> npx playwright test browsers.spec.mjs` | Runs the packaged extension in an installed Chrome or Brave                           |
 
 The same steps run in CI, in this order. Run them all before you open a pull request.
 
